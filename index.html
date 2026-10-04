@@ -1,0 +1,408 @@
+<!doctype html>
+<html lang="vi">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Tổng quan sinh viên | UniTrack</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="static/style.css">
+    <style>
+        #login-toggle { flex-wrap: nowrap; white-space: nowrap; }
+        #login-toggle #login-label { width: auto; flex: 1 1 auto; font-size: 14px; text-align: left; white-space: nowrap; }
+    </style>
+</head>
+<body>
+    <aside class="sidebar">
+        <a class="brand" href="#"><span class="brand-mark">QL</span><span>SinhVIên</span></a>
+        <p class="nav-label">Không gian làm việc</p>
+        <nav>
+            <a class="nav-item active" href="#"><span>▦</span> Tổng quan</a>
+            <button class="nav-item" id="login-toggle" type="button" style="background:none;border:none;cursor:pointer;width:100%;text-align:left;font:inherit;"><span>⎆</span> <span id="login-label">Đăng nhập</span></button>
+        </nav>
+    </aside>
+
+    <main class="main-content">
+        <section class="page-heading">
+            <div>
+                <p class="eyebrow">Dữ liệu học tập</p>
+                <h1>Danh sách sinh viên</h1>
+                <p class="subtitle">Theo dõi và quản lý hồ sơ sinh viên trong toàn trường.</p>
+            </div>
+            <button class="primary-button" id="open-add-student" type="button">
+                <span>＋</span> Thêm sinh viên
+            </button>
+        </section>
+
+        <section class="stats-grid">
+            <article class="stat-card orange">
+                <div class="stat-top"><span>Tổng sinh viên</span><span class="stat-icon">♙</span></div>
+                <strong id="stat-total">0</strong>
+                <small>Hồ sơ trong hệ thống</small>
+            </article>
+            <article class="stat-card blue">
+                <div class="stat-top"><span>Đang theo học</span><span class="stat-icon">↗</span></div>
+                <strong id="stat-active">0</strong>
+                <small><b id="stat-active-rate">0%</b> tổng số sinh viên</small>
+            </article>
+            <article class="stat-card green">
+                <div class="stat-top"><span>DTB trung bình</span><span class="stat-icon">✦</span></div>
+                <strong id="stat-average">0.00</strong>
+                <small>Thang điểm 4.0</small>
+            </article>
+            <article class="stat-card purple">
+                <div class="stat-top"><span>Chuyên ngành</span><span class="stat-icon">⌘</span></div>
+                <strong id="stat-majors">0</strong>
+                <small>Đang được đào tạo</small>
+            </article>
+        </section>
+
+        <section class="content-panel" id="students">
+            <div class="panel-header">
+                <div>
+                    <h2>Sinh viên gần đây</h2>
+                    <p>Cập nhật và quản lý thông tin hồ sơ.</p>
+                </div>
+                <form class="filters" id="filter-form">
+                    <div class="search-box">
+                        <span>⌕</span>
+                        <input id="search-input" name="q" value="" placeholder="Tìm theo tên, mã SV..." aria-label="Tìm kiếm">
+                    </div>
+                    <select id="major-filter" name="major" aria-label="Lọc theo chuyên ngành">
+                        <option value="">Tất cả chuyên ngành</option>
+                    </select>
+                    <select id="status-filter" name="status" aria-label="Lọc theo trạng thái">
+                        <option value="">Trạng thái</option>
+                        <option value="Đang học">Đang học</option>
+                        <option value="Bảo lưu">Bảo lưu</option>
+                        <option value="Đã tốt nghiệp">Đã tốt nghiệp</option>
+                    </select>
+                    <button class="filter-button" type="submit">Lọc</button>
+                </form>
+            </div>
+
+            <div id="flash-box" style="margin:8px 0;padding:8px 12px;background:rgba(255,107,53,.06);border:1px dashed rgba(255,107,53,.25);border-radius:6px;font-size:12px;display:none"></div>
+
+            <div class="table-wrap">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>SINH VIÊN</th>
+                            <th>CHUYÊN NGÀNH</th>
+                            <th>LỚP</th>
+                            <th>DTB</th>
+                            <th>TRẠNG THÁI</th>
+                            <th></th>
+                        </tr>
+                    </thead>
+                    <tbody id="student-table-body">
+                        <tr><td colspan="6" class="empty-state">Đang tải dữ liệu...</td></tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <div class="table-footer">
+                <span>Hiển thị <b id="student-count">0</b> sinh viên</span>
+                <span class="pagination">
+                    <button type="button" disabled>‹</button>
+                    <button type="button" class="current">1</button>
+                    <button type="button" disabled>›</button>
+                </span>
+            </div>
+        </section>
+
+        <dialog id="student-modal">
+            <form id="student-form">
+                <div class="modal-heading">
+                    <div>
+                        <p class="eyebrow">Hồ sơ mới</p>
+                        <h2>Thêm sinh viên</h2>
+                    </div>
+                    <button type="button" class="close-button" id="close-student-modal">×</button>
+                </div>
+                <div class="form-grid">
+                    <label>Mã sinh viên<input name="student_code" required placeholder="SV2024010"></label>
+                    <label>Họ và tên<input name="full_name" required placeholder="Nguyễn Văn An"></label>
+                    <label>Email<input type="email" name="email" required placeholder="email@university.edu.vn"></label>
+                    <label>Số điện thoại<input name="phone" placeholder="0901 234 567"></label>
+                    <label>Ngày sinh<input type="date" name="date_of_birth"></label>
+                    <label>Giới tính<select name="gender"><option>Nam</option><option>Nữ</option><option>Khác</option></select></label>
+                    <label>Chuyên ngành<input name="major" required placeholder="Công nghệ thông tin"></label>
+                    <label>Lớp<input name="class_name" required placeholder="K18A1"></label>
+                    <label>DTB<input type="number" name="dtb" min="0" max="4" step="0.01" value="0"></label>
+                    <label>Trạng thái<select name="status"><option>Đang học</option><option>Bảo lưu</option><option>Đã tốt nghiệp</option></select></label>
+                </div>
+                <div class="modal-actions">
+                    <button type="button" class="secondary-button" id="cancel-student">Hủy</button>
+                    <button type="submit" class="primary-button">Lưu hồ sơ</button>
+                </div>
+            </form>
+        </dialog>
+
+        <dialog id="login-modal">
+            <form id="login-form">
+                <div class="modal-heading">
+                    <div>
+                        <p class="eyebrow">Quản trị</p>
+                        <h2>Đăng nhập</h2>
+                    </div>
+                    <button type="button" class="close-button" id="close-login-modal">×</button>
+                </div>
+                <div class="form-grid">
+                    <label>Tài khoản<input name="username" required placeholder="admin"></label>
+                    <label>Mật khẩu<input type="password" name="password" required placeholder="••••••••"></label>
+                </div>
+                <div class="modal-actions">
+                    <button type="button" class="secondary-button" id="cancel-login">Hủy</button>
+                    <button type="submit" class="primary-button">Đăng nhập</button>
+                </div>
+            </form>
+        </dialog>
+    </main>
+
+    <script>
+        const state = { majors: [] };
+        const API_BASE = window.location.protocol === 'file:' ? 'http://127.0.0.1:5000' : '';
+        const url = (path) => `${API_BASE}${path}`;
+        let flashTimeout;
+
+        async function guardSession() {
+            try {
+                const response = await fetch(url('/api/session'));
+                const data = await response.json();
+                if (!response.ok || !data.logged_in) {
+                    window.location.replace(url('/login'));
+                    return false;
+                }
+                return true;
+            } catch (error) {
+                window.location.replace(url('/login'));
+                return false;
+            }
+        }
+
+        function showFlash(message, type = 'info') {
+            const box = document.getElementById('flash-box');
+            box.style.display = 'block';
+            box.textContent = message;
+            box.style.color = type === 'error' ? '#b42318' : type === 'success' ? '#147a52' : '#1d4ed8';
+            window.clearTimeout(flashTimeout);
+            flashTimeout = window.setTimeout(clearFlash, 3000);
+        }
+
+        function clearFlash() {
+            window.clearTimeout(flashTimeout);
+            const box = document.getElementById('flash-box');
+            box.style.display = 'none';
+            box.textContent = '';
+        }
+
+        async function showServerFlash() {
+            const response = await fetch(url('/api/flash'));
+            if (!response.ok) return;
+            const data = await response.json();
+            const message = data.messages?.at(-1);
+            if (message) showFlash(message.message, message.category);
+        }
+
+        function setLoginLabel(loggedIn) {
+            document.getElementById('login-label').textContent = loggedIn ? 'Đăng xuất' : 'Đăng nhập';
+        }
+
+        async function syncLoginState() {
+            try {
+                const response = await fetch(url('/api/session'));
+                const data = await response.json();
+                setLoginLabel(Boolean(data.logged_in));
+            } catch (error) {
+                setLoginLabel(false);
+            }
+        }
+
+        function getInitials(fullName) {
+            if (!fullName) return 'SV';
+            const parts = fullName.trim().split(/\s+/);
+            return (parts[0]?.[0] || '') + (parts[parts.length - 1]?.[0] || '').toUpperCase();
+        }
+
+        function renderStats(stats) {
+            const total = Number(stats?.total || 0);
+            const active = Number(stats?.active || 0);
+            const average = Number(stats?.average || 0);
+            const majors = Number(stats?.majors || 0);
+
+            document.getElementById('stat-total').textContent = total;
+            document.getElementById('stat-active').textContent = active;
+            document.getElementById('stat-average').textContent = average.toFixed(2);
+            document.getElementById('stat-majors').textContent = majors;
+            document.getElementById('stat-active-rate').textContent = total ? `${Math.round((active / total) * 100)}%` : '0%';
+        }
+
+        function populateMajors(majors) {
+            const select = document.getElementById('major-filter');
+            const current = select.value;
+            select.innerHTML = '<option value="">Tất cả chuyên ngành</option>' + majors.map(item => `<option value="${item}">${item}</option>`).join('');
+            if (majors.includes(current)) select.value = current;
+        }
+
+        function renderStudents(students) {
+            const tbody = document.getElementById('student-table-body');
+            if (!students.length) {
+                tbody.innerHTML = '<tr><td colspan="6" class="empty-state">Chưa có sinh viên phù hợp.</td></tr>';
+                document.getElementById('student-count').textContent = '0';
+                return;
+            }
+
+            tbody.innerHTML = students.map((student, index) => {
+                const statusClass = student.status === 'Đang học' ? 'status-active' : 'status-paused';
+                const initials = getInitials(student.full_name);
+                const avatarClass = `avatar-${(index % 5) + 1}`;
+                return `
+                    <tr>
+                        <td>
+                            <div class="student-cell">
+                                <div class="student-avatar ${avatarClass}">${initials}</div>
+                                <div>
+                                    <strong>${student.full_name}</strong>
+                                    <small>${student.student_code} · ${student.email}</small>
+                                </div>
+                            </div>
+                        </td>
+                        <td>${student.major}</td>
+                        <td>${student.class_name}</td>
+                        <td><strong class="dtb">${Number(student.dtb || 0).toFixed(2)}</strong></td>
+                        <td><span class="status ${statusClass}">${student.status}</span></td>
+                        <td>
+                            <button type="button" class="row-menu" data-action="detail" data-id="${student.id}" aria-label="Xem chi tiết" title="Xem chi tiết">👁</button>
+                            <button type="button" class="row-menu" data-action="delete" data-id="${student.id}" aria-label="Xóa" title="Xóa">×</button>
+                        </td>
+                    </tr>
+                `;
+            }).join('');
+
+            document.getElementById('student-count').textContent = students.length;
+        }
+
+        async function loadStudents() {
+            const form = document.getElementById('filter-form');
+            const formData = new FormData(form);
+            const params = new URLSearchParams({
+                q: formData.get('q') || '',
+                status: formData.get('status') || '',
+                major: formData.get('major') || ''
+            });
+
+            const response = await fetch(url(`/api/students?${params.toString()}`));
+            const data = await response.json();
+            if (!response.ok) {
+                showFlash(data.message || 'Không thể tải dữ liệu.', 'error');
+                return;
+            }
+
+            state.majors = data.majors || [];
+            populateMajors(state.majors);
+            renderStats(data.stats || {});
+            renderStudents(data.students || []);
+            clearFlash();
+        }
+
+        async function submitStudentForm(event) {
+            event.preventDefault();
+            const form = event.target;
+            const formData = new FormData(form);
+            const response = await fetch(url('/api/students'), {
+                method: 'POST',
+                body: formData
+            });
+            const data = await response.json();
+
+            if (!response.ok) {
+                showFlash(data.message || 'Không thể lưu sinh viên.', 'error');
+                return;
+            }
+
+            document.getElementById('student-modal').close();
+            form.reset();
+            showFlash(data.message || 'Đã lưu sinh viên.', 'success');
+            loadStudents();
+        }
+
+        async function deleteStudent(studentId) {
+            if (!confirm('Xóa hồ sơ này?')) return;
+            const response = await fetch(url(`/api/students/${studentId}`), { method: 'DELETE' });
+            const data = await response.json();
+            if (!response.ok) {
+                showFlash(data.message || 'Không thể xóa sinh viên.', 'error');
+                return;
+            }
+            showFlash(data.message || 'Đã xóa sinh viên.', 'success');
+            loadStudents();
+        }
+
+        async function loginUser(event) {
+            event.preventDefault();
+            const form = event.target;
+            const formData = new FormData(form);
+            const response = await fetch(url('/api/login'), {
+                method: 'POST',
+                body: formData
+            });
+            const data = await response.json();
+
+            if (!response.ok) {
+                showFlash(data.message || 'Đăng nhập thất bại.', 'error');
+                return;
+            }
+
+            document.getElementById('login-modal').close();
+            form.reset();
+            setLoginLabel(true);
+            showFlash(data.message || 'Đăng nhập thành công.', 'success');
+        }
+
+        function logoutUser() {
+            window.location.assign(url('/logout'));
+        }
+
+        document.getElementById('filter-form').addEventListener('submit', (event) => {
+            event.preventDefault();
+            loadStudents();
+        });
+
+        document.getElementById('student-form').addEventListener('submit', submitStudentForm);
+        document.getElementById('login-form').addEventListener('submit', loginUser);
+        document.getElementById('open-add-student').addEventListener('click', () => document.getElementById('student-modal').showModal());
+        document.getElementById('close-student-modal').addEventListener('click', () => document.getElementById('student-modal').close());
+        document.getElementById('cancel-student').addEventListener('click', () => document.getElementById('student-modal').close());
+        document.getElementById('close-login-modal').addEventListener('click', () => document.getElementById('login-modal').close());
+        document.getElementById('cancel-login').addEventListener('click', () => document.getElementById('login-modal').close());
+        document.getElementById('login-toggle').addEventListener('click', async () => {
+            const loginLabel = document.getElementById('login-label');
+            if (loginLabel.textContent.trim() === 'Đăng xuất') {
+                await logoutUser();
+                return;
+            }
+            window.location.href = url('/login');
+        });
+
+        document.getElementById('student-table-body').addEventListener('click', (event) => {
+            const button = event.target.closest('button');
+            if (!button) return;
+            const studentId = button.dataset.id;
+            if (!studentId) return;
+            if (button.dataset.action === 'delete') deleteStudent(Number(studentId));
+            if (button.dataset.action === 'detail') {
+                window.location.href = url(`/students/${studentId}`);
+            }
+        });
+
+        guardSession().then(async (ok) => {
+            if (!ok) return;
+            syncLoginState();
+            await loadStudents();
+            await showServerFlash();
+        });
+    </script>
+</body>
+</html>

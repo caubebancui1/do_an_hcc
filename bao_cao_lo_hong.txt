@@ -1,0 +1,221 @@
+3333333333BAO CAO CAC DOAN CODE LOI VA LO HONG SQL INJECTION
+Du an: Quan ly sinh vien Flask + MySQL
+
+Luu y:
+- File app.py hien tai con cac doan SQL khong an toan duoi day.
+- Noi dung nay dung de hoc tap va in bao cao trong moi truong cuc bo.
+- Khong su dung cac doan code loi khi trien khai that.
+
+======================================================================
+1. SQL INJECTION TAI CHUC NANG TIM KIEM
+======================================================================
+
+Vi tri: route /dashboard
+
+DOAN CODE LOI:
+
+query = request.args.get("q", "").strip()
+
+if query:
+    sql = (
+        "SELECT * FROM students WHERE full_name LIKE '%'"
+        + query
+        + "%' OR student_code LIKE '%'"
+        + query
+        + "%' OR email LIKE '%'"
+        + query
+        + "%'"
+    )
+    students = db.session.execute(text(sql)).fetchall()
+
+
+TAI SAO CHO PHEP CHEN SQL?
+
+Bien query duoc lay truc tiep tu URL cua nguoi dung. Sau do code dung
+phep cong (+) de noi query vao chuoi SQL. Database khong con phan biet
+phan nao la du lieu va phan nao la cau lenh SQL.
+
+Ky tu nhay don (') co the dong chuoi LIKE. Sau do nguoi dung co the
+chen them dieu kien SQL. Vi du, neu gia tri tim kiem chua ky tu dong
+chuoi va dieu kien luon dung, cau SQL co the bi bien doi thanh:
+
+SELECT * FROM students
+WHERE full_name LIKE '%' OR 1=1 --%'
+
+Dieu kien 1=1 luon dung. Ky hieu -- bien phan con lai thanh comment.
+Ket qua la truy van co the tra ve nhieu ban ghi hon du kien.
+
+CACH PHONG CHONG:
+
+Dung parameterized query:
+
+sql = text("""
+    SELECT * FROM students
+    WHERE full_name LIKE :pattern
+       OR student_code LIKE :pattern
+       OR email LIKE :pattern
+""")
+students = db.session.execute(sql, {"pattern": f"%{query}%"}).fetchall()
+
+Khi do query chi duoc xem la gia tri cua tham so :pattern, khong duoc
+coi la mot phan cua cau lenh SQL.
+
+======================================================================
+2. SQL INJECTION DANG TIME-BASED TAI API THONG KE
+======================================================================
+
+Vi tri: route /api/stats
+
+DOAN CODE LOI:
+
+student_id = request.args.get("id", "").strip()
+
+if student_id:
+    sql = f"SELECT * FROM students WHERE id = {student_id}"
+    start = time.time()
+    try:
+        result = db.session.execute(text(sql))
+        student = result.fetchone()
+    except Exception as e:
+        db.session.rollback()
+        student = None
+
+
+TAI SAO CHO PHEP CHEN SQL?
+
+student_id duoc lay tu tham so id nhung khong duoc kiem tra la so nguyen.
+Code noi truc tiep gia tri nay vao f-string SQL.
+
+Binh thuong, id chi nen la mot so, vi du:
+
+SELECT * FROM students WHERE id = 1
+
+Nhung neu gia tri dau vao chua them bieu thuc SQL, cau lenh co the bi
+thay doi. Ke tan cong co the chen dieu kien lam truy van cham hon va
+suy luan ket qua dua tren thoi gian phan hoi. Day la SQL Injection dang
+time-based.
+
+CACH PHONG CHONG:
+
+try:
+    student_id = int(request.args.get("id", ""))
+except ValueError:
+    return jsonify({"error": "id phai la so nguyen"}), 400
+
+student = db.session.get(Student, student_id)
+
+Ep kieu int va dung ORM se ngan khong cho phep dua mot doan SQL tuy y
+vao vi tri cua id.
+
+======================================================================
+3. SQL INJECTION QUA THAM SO check
+======================================================================
+
+Vi tri: route /api/student/<int:student_id>
+
+DOAN CODE LOI:
+
+check_param = request.args.get("check", "").strip()
+
+if check_param:
+    sql = f"SELECT * FROM students WHERE id = {student_id} AND {check_param}"
+    result = db.session.execute(text(sql))
+    exists = result.fetchone() is not None
+    return jsonify({"condition_met": exists})
+
+
+TAI SAO DAY LA LOI NGHIEM TRONG?
+
+check_param khong phai chi la mot gia tri. No duoc dat thang sau tu khoa
+AND, vi vay nguoi dung co the truyen ca mot bieu thuc SQL.
+
+Ket qua API chi tra ve true hoac false. Su khac nhau nay co the bi loi
+dung de kiem tra tung dieu kien va suy luan thong tin trong database.
+
+Day khong phai loi co the sua bang cach viet:
+
+text("SELECT ... AND :check")
+
+Vi tham so chi dung cho gia tri, khong dung de thay the mot phan cau
+lenh SQL. Cach dung dung la bo tham so check, hoac chi cho phep mot so
+lua chon co dinh bang whitelist.
+
+======================================================================
+4. SQL INJECTION TAI API LOC NGANH
+======================================================================
+
+DOAN CODE LOI TRONG PHIEN BAN CU:
+
+major = request.args.get("major", "").strip()
+
+if major:
+    sql = f"SELECT * FROM students WHERE major = '{major}'"
+    result = db.session.execute(text(sql))
+    students = result.fetchall()
+
+
+TAI SAO CHO PHEP CHEN SQL?
+
+Bien major duoc dat trong dau nhay SQL bang f-string. Neu dau vao chua
+ky tu nhay don, nguoi dung co the dong chuoi major va chen them dieu
+kien SQL vao cau WHERE.
+
+Vi du binh thuong:
+
+SELECT * FROM students WHERE major = 'Cong nghe thong tin'
+
+Van de nam o cho major khong duoc truyen qua tham so. No duoc ghep
+thang vao cau lenh nen database co the hieu mot phan du lieu la lenh.
+
+CACH PHONG CHONG:
+
+sql = text("SELECT * FROM students WHERE major = :major")
+result = db.session.execute(sql, {"major": major})
+
+Luu y: route /api/filter khong con trong phan app.py hien tai da doc;
+doan tren la code loi cua phien ban truoc.
+
+======================================================================
+5. KHONG KIEM TRA QUYEN TRUY CAP
+======================================================================
+
+Vi du cac route quan tri:
+
+@app.post("/students")
+def create_student():
+    # them sinh vien
+    ...
+
+@app.post("/students/<int:student_id>/delete")
+def delete_student(student_id):
+    student = db.get_or_404(Student, student_id)
+    db.session.delete(student)
+    db.session.commit()
+
+
+TAI SAO LA LO HONG?
+
+Ung dung co co che login va luu session logged_in, nhung cac route
+quan tri khong kiem tra session truoc khi cho phep them hoac xoa du lieu.
+Nguoi chua dang nhap van co the goi truc tiep endpoint.
+
+Day la loi phan quyen (Broken Access Control), khong phai SQL Injection.
+Can yeu cau dang nhap truoc moi thao tac quan tri.
+
+======================================================================
+TOM TAT NGUYEN NHAN CHUNG
+======================================================================
+
+1. Du lieu nguoi dung duoc lay tu request.args.
+2. Du lieu do duoc noi truc tiep vao chuoi SQL bang + hoac f-string.
+3. text() khong tu dong loc chuoi SQL da duoc tao sai cach.
+4. Database hieu phan dau vao la mot phan cua cau lenh SQL.
+5. Can dung ORM, parameterized query, ep kieu du lieu va kiem tra quyen.
+
+Cac mau an toan:
+
+sql = text("SELECT * FROM students WHERE major = :major")
+db.session.execute(sql, {"major": major})
+
+student_id = int(student_id)
+student = db.session.get(Student, student_id)
