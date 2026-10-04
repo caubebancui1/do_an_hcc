@@ -1,0 +1,67 @@
+{% extends "base.html" %}
+{% block title %}{{ student.full_name }} | UniTrack{% endblock %}
+{% block content %}
+<section class="page-heading">
+    <div>
+        <p class="eyebrow">Hồ sơ sinh viên</p>
+        <h1>{{ student.full_name }}</h1>
+        <p class="subtitle">{{ student.student_code }} · {{ student.major }}</p>
+    </div>
+    <a class="primary-button" href="{{ url_for('index') }}"><span>←</span> Quay lại</a>
+</section>
+<section class="content-panel">
+    <div class="panel-header">
+        <div><h2>Thông tin chi tiết</h2><p>Toàn bộ thuộc tính của sinh viên.</p></div>
+    </div>
+    <div class="detail-grid">
+        <div class="detail-row">
+            <span class="detail-label">Mã sinh viên</span>
+            <span class="detail-value">{{ student.student_code }}</span>
+        </div>
+        <div class="detail-row">
+            <span class="detail-label">Họ và tên</span>
+            <span class="detail-value">{{ student.full_name }}</span>
+        </div>
+        <div class="detail-row">
+            <span class="detail-label">Email</span>
+            <span class="detail-value">{{ student.email }}</span>
+        </div>
+        <div class="detail-row">
+            <span class="detail-label">Số điện thoại</span>
+            <span class="detail-value">{{ student.phone or "—" }}</span>
+        </div>
+        <div class="detail-row">
+            <span class="detail-label">Ngày sinh</span>
+            <span class="detail-value">{{ student.date_of_birth or "—" }}</span>
+        </div>
+        <div class="detail-row">
+            <span class="detail-label">Giới tính</span>
+            <span class="detail-value">{{ student.gender }}</span>
+        </div>
+        <div class="detail-row">
+            <span class="detail-label">Chuyên ngành</span>
+            <span class="detail-value">{{ student.major }}</span>
+        </div>
+        <div class="detail-row">
+            <span class="detail-label">Lớp</span>
+            <span class="detail-value">{{ student.class_name }}</span>
+        </div>
+        <div class="detail-row">
+            <span class="detail-label">DTB</span>
+            <span class="detail-value">{{ '%.2f'|format(student.dtb|float) }}</span>
+        </div>
+        <div class="detail-row">
+            <span class="detail-label">Trạng thái</span>
+            <span class="detail-value"><span class="status status-{{ 'active' if student.status == 'Đang học' else 'paused' }}">{{ student.status }}</span></span>
+        </div>
+        <div class="detail-row">
+            <span class="detail-label">Ngày tạo</span>
+            <span class="detail-value">{{ student.created_at.strftime('%d/%m/%Y %H:%M') if student.created_at else "—" }}</span>
+        </div>
+        <div class="detail-row">
+            <span class="detail-label">Cập nhật lần cuối</span>
+            <span class="detail-value">{{ student.updated_at.strftime('%d/%m/%Y %H:%M') if student.updated_at else "—" }}</span>
+        </div>
+    </div>
+</section>
+{% endblock %}

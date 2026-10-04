@@ -1,0 +1,28 @@
+<!doctype html>
+<html lang="vi">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>{% block title %}Sinh viên | UniTrack{% endblock %}</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+    <aside class="sidebar">
+        <a class="brand" href="{{ url_for('index') }}"><span class="brand-mark">QL</span><span>SinhVIên</span></a>
+        <p class="nav-label">Không gian làm việc</p>
+        <nav>
+            <a class="nav-item active" href="{{ url_for('index') }}"><span>▦</span> Tổng quan</a>
+            <a class="nav-item" href="{{ url_for('logout') if session.get('logged_in') else url_for('login') }}"><span>⎆</span> {{ 'Đăng xuất' if session.get('logged_in') else 'Đăng nhập' }}</a>
+        </nav>
+    </aside>
+    <main class="main-content">
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}<div class="flash-stack">{% for category, message in messages %}<div class="flash {{ category }}">{{ message }}</div>{% endfor %}</div>{% endif %}
+        {% endwith %}
+        {% block content %}{% endblock %}
+    </main>
+</body>
+</html>
